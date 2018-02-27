@@ -12,6 +12,8 @@ by Pacman agents (in searchAgents.py).
 """
 
 import util
+from heapq import heappush, heappop, heapify
+import time
 
 class SearchProblem:
   """
@@ -67,41 +69,156 @@ def tinyMazeSearch(problem):
   return  [s,s,w,s,w,w,s,w]
 
 def depthFirstSearch(problem):
-  """
-  Search the deepest nodes in the search tree first [p 85].
-  
-  Your search algorithm needs to return a list of actions that reaches
-  the goal.  Make sure to implement a graph search algorithm [Fig. 3.7].
-  
-  To get started, you might want to try some of these simple commands to
-  understand the search problem that is being passed in:
-  
-  print "Start:", problem.startingState()
-  print "Is the start a goal?", problem.isGoal(problem.startingState())
-  print "Start's successors:", problem.successorStates(problem.startingState())
-  """
-  util.raiseNotDefined()
+    list = []
+    discovered = []
+    backpointer = {}
+    list.append((problem.startingState(), 'None', 1))
+    backpointer[(problem.startingState(), 'None', 1)] = None
 
+    while list:
+        curr = list.pop()
+        if problem.isGoal(curr[0]):
+            path = []
+            npath = []
+            s = curr
+            path.append(s)
+            while s is not None:
+                path.append(backpointer[s])
+                s = backpointer[s]
+            path.pop()
+            path.pop()
+            path.reverse()
+            for action in path:
+                npath.append(action[1])
+            return npath
+        if curr[0] not in discovered:
+            discovered.append(curr[0])
+            successors = problem.successorStates(curr[0])
+            for item in successors:
+                if item[0] not in discovered:
+                    if item not in list and item not in backpointer:
+                        list.append(item)
+                        backpointer[item] = curr
+    """
+    Search the deepest nodes in the search tree first [p 85].
+    
+    Your search algorithm needs to return a list of actions that reaches
+    the goal.  Make sure to implement a graph search algorithm [Fig. 3.7].
+    
+    To get started, you might want to try some of these simple commands to
+    understand the search problem that is being passed in:
+    
+    print "Start:", problem.startingState()
+    print "Is the start a goal?", problem.isGoal(problem.startingState())
+    print "Start's successors:", problem.successorStates(problem.startingState())
+    """
 
 def breadthFirstSearch(problem):
-  "Search the shallowest nodes in the search tree first. [p 81]"
-  util.raiseNotDefined()
+    list = []
+    discovered = []
+    path = []
+    list.append((problem.startingState(), 'None', path))
+
+    while list:
+        curr = list.pop()
+        if problem.isGoal(curr[0]):
+            #path = []
+            #npath = []
+            #s = curr
+            #path.append(s)
+            #while s is not None:
+            #    path.append(backpointer[s])
+            #    s = backpointer[s]
+            #path.pop()
+            #path.pop()
+            #path.reverse()
+            #for action in path:
+            #    npath.append(action[1])
+            #return npath
+            return curr[2]
+        if curr[0] not in discovered:
+            discovered.append(curr[0])
+            successors = problem.successorStates(curr[0])
+            for item in successors:
+                if item[0] not in discovered:
+                    if item not in list:
+                        list.insert(0, (item[0], item[1], curr[2] + [item[1]]))
+    return []
       
 def uniformCostSearch(problem):
-  "Search the node of least total cost first. "
-  util.raiseNotDefined()
+    list = []
+    discovered = []
+    backpointer = {}
+    cost = 1
+    heappush(list, (cost, (problem.startingState(), 'None')))
+    backpointer[(problem.startingState(), 'None')] = None
+
+    while list:
+        cost, curr = heappop(list)
+        if problem.isGoal(curr[0]):
+            path = []
+            npath = []
+            s = curr
+            path.append(s)
+            while s is not None:
+                path.append(backpointer[s])
+                s = backpointer[s]
+            path.pop()
+            path.pop()
+            path.reverse()
+            for action in path:
+                npath.append(action[1])
+            print(npath)
+            return npath
+
+        if curr[0] not in discovered:
+            discovered.append(curr[0])
+            successors = problem.successorStates(curr[0])
+            for item in successors:
+                if item[0] not in discovered:
+                    if item not in list and item not in backpointer:
+                        heappush(list, ((cost + item[2]), item))
+                        backpointer[item] = curr
 
 def nullHeuristic(state, problem=None):
-  """
-  A heuristic function estimates the cost from the current state to the nearest
-  goal in the provided SearchProblem.  This heuristic is trivial.
-  """
+
   return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-  "Search the node that has the lowest combined cost and heuristic first."
-  util.raiseNotDefined()
-    
+    list = []
+    discovered = []
+    backpointer = {}
+    cost = 1
+    heappush(list, (cost, (problem.startingState(), 'None')))
+    backpointer[(problem.startingState(), 'None')] = None
+
+    while list:
+        cost, curr = heappop(list)
+        cost -= heuristic(curr[0], problem)
+        if problem.isGoal(curr[0]):
+            path = []
+            npath = []
+            s = curr
+            path.append(s)
+            while s is not None:
+                path.append(backpointer[s])
+                s = backpointer[s]
+            path.pop()
+            path.pop()
+            path.reverse()
+            for action in path:
+                npath.append(action[1])
+            print(npath)
+            return npath
+
+        if curr[0] not in discovered:
+            discovered.append(curr[0])
+            successors = problem.successorStates(curr[0])
+            for item in successors:
+                if item[0] not in discovered:
+                    if item not in list and item not in backpointer:
+                        heappush(list, ((cost + item[2] + heuristic(item[0], problem)), item))
+                        backpointer[item] = curr
 
   
 # Abbreviations

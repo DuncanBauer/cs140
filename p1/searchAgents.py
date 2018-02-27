@@ -32,9 +32,11 @@ from game import Directions
 from game import Agent
 from game import Actions
 import util
+from util import manhattanDistance
 import time
 import search
 import searchAgents
+import sys
 
 class GoWestAgent(Agent):
   "An agent that goes West until it can't."
@@ -281,44 +283,42 @@ class CornersProblem(search.SearchProblem):
         print 'Warning: no food in corner ' + str(corner)
     self._expanded = 0 # Number of search nodes expanded
     
-    "*** Your Code Here ***"
-    
   def startingState(self):
-    "Returns the start state (in your state space, not the full Pacman state space)"
-    
-    "*** Your Code Here ***"
+      "Returns the start state (in your state space, not the full Pacman state space)"
+      return (self.startingPosition, [])
     
   def isGoal(self, state):
-    "Returns whether this search state is a goal state of the problem"
-    
-    "*** Your Code Here ***"
-       
+      "Returns whether this search state is a goal state of the problem"
+      if state[0] in self.corners and state[0] not in state[1]:
+          state[1].append(state[0])
+      return state[1].count == 4
+
   def successorStates(self, state):
-    """
-    Returns successor states, the actions they require, and a cost of 1.
-    
-     As noted in search.py:
-         For a given state, this should return a list of triples, 
-     (successor, action, stepCost), where 'successor' is a 
-     successor to the current state, 'action' is the action
-     required to get there, and 'stepCost' is the incremental 
-     cost of expanding to that successor
-    """
-    
-    succ = []
-    for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-      # Add a successor state to the successor list if the action is legal
-      # Here's a code snippet for figuring out whether a new position hits a wall:
-      #   x,y = currentPosition
-      #   dx, dy = Actions.directionToVector(action)
-      #   nextx, nexty = int(x + dx), int(y + dy)
-      #   hitsWall = self.walls[nextx][nexty]
-      
-      "*** Your Code Here ***"
-      util.raiseNotDefined()
-      
-    self._expanded += 1
-    return succ
+      """
+      Returns successor states, the actions they require, and a cost of 1.
+
+       As noted in search.py:
+           For a given state, this should return a list of triples, 
+       (successor, action, stepCost), where 'successor' is a 
+       successor to the current state, 'action' is the action
+       required to get there, and 'stepCost' is the incremental 
+       cost of expanding to that successor
+      """
+
+      if state[0] in self.corners and state[0] not in state[1]:
+          state[1].append(state[0])
+
+      succ = []
+      for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+          x,y = state[0]
+          dx, dy = Actions.directionToVector(action)
+          nextx, nexty = int(x + dx), int(y + dy)
+          if not self.walls[nextx][nexty]:
+              succ.append((((nextx, nexty), state[1]), action, 1))
+
+      self._expanded += 1
+      return succ
+
 
   def actionsCost(self, actions):
     """
@@ -352,7 +352,13 @@ def cornersHeuristic(state, problem):
   walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
   
   "*** Your Code Here ***"
-  
+  closest_corner = None
+  closest_distance = 9999
+  for corner in corners:
+      dist = manhattanDistance(corner, problem.startingPosition)
+      if dist < closest_distance:
+          closest_corner = corner
+          closest_distance = dist
   return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
@@ -442,9 +448,27 @@ def foodHeuristic(state, problem):
     problem.heuristicInfo['wallCount'] = problem.walls.count()
   Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
   """
-  position, foodGrid = state
-  "*** Your Code Here ***"
-  return 0
+  currLoc = state[0]
+  currGrid = state[1]
+  food = currGrid.asList()
+  maxDistance = -sys.maxint -1
+  for i in food:
+      manhattanDistance = abs(i[0] - currLoc[0]) + abs(i[1] - currLoc[1])
+      if manhattanDistance > maxDistance:
+          maxDistance = manhattanDistance
+  return maxDistance - 10*nearFood(state[0], currGrid)
+
+
+def nearFood(pos1, currGrid):
+    avg_dist = 0
+    spaceCount = 0
+    for column in currGrid[row]:
+        print(currGrid[row][column])
+        if currGrid[row][column]:
+            spaceCount += 1
+            avg_dist += abs((pos1[0] - currGrid[space][0]) + abs(pos1[1] - currGrid[space][1]))
+    return avg_dist/spaceCount
+    #manhattanDistance = abs((pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]))
 
 def numFoodHeuristic(state, problem):
   return state[1].count()
